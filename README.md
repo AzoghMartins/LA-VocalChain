@@ -1,6 +1,6 @@
 # LA-VocalChain
 
-A complete vocal chain in one plugin for Linux (VST3 / LV2 / Standalone): pitch correction,
+A complete vocal chain in one plugin for Linux, Windows and macOS (VST3, plus LV2 / Standalone on Linux and AU on macOS): pitch correction,
 harmonies, gate and breath control, auto level, de-esser, adaptive tone shaping, EQ, compression,
 saturation, doubler, modulation, delay, reverb and a limiter. It uses the same look as LA-Trigger.
 
@@ -79,7 +79,9 @@ reports about 32 ms (1555 samples at 48 kHz). Tracking mode reports about 4 ms. 
 low voices are monitored a few ms later than reported. The plugin reports its latency to the DAW, so
 keep plugin delay compensation enabled. When Tune is off, stereo sources keep their stereo image.
 
-## Building (Linux)
+## Building
+
+### Linux
 
 ```bash
 sudo apt install build-essential cmake ninja-build libasound2-dev libx11-dev libxrandr-dev \
@@ -99,7 +101,44 @@ Options:
 - `-DLAVC_JUCE_DIR=/path/to/JUCE` uses a local JUCE checkout.
 - `-DLAVC_COPY_AFTER_BUILD=ON` installs the plugins automatically.
 
-GitHub Actions builds every push and uploads a ready-to-install tarball as an artifact.
+### Windows
+
+Needs Visual Studio 2022 (the "Desktop development with C++" workload) and CMake 3.22 or newer.
+
+```powershell
+cmake -B build -G "Visual Studio 17 2022" -A x64          # downloads JUCE 8 automatically
+cmake --build build --config Release --parallel
+ctest --test-dir build -C Release --output-on-failure       # optional: run the tests
+```
+
+Install by copying `build\LAVocalChain_artefacts\Release\VST3\LA-VocalChain.vst3` into `C:\Program Files\Common Files\VST3`.
+
+### macOS
+
+Needs Xcode (or the Command Line Tools) and CMake 3.22 or newer. The build is a universal binary
+(Apple silicon and Intel) and runs on macOS 10.13 or newer.
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release                   # downloads JUCE 8 automatically
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure                  # optional: run the tests
+
+# install
+cp -R build/LAVocalChain_artefacts/Release/VST3/LA-VocalChain.vst3 ~/Library/Audio/Plug-Ins/VST3/
+cp -R build/LAVocalChain_artefacts/Release/AU/LA-VocalChain.component ~/Library/Audio/Plug-Ins/Components/
+```
+
+### Downloads
+
+GitHub Actions builds every push on Linux, Windows and macOS and uploads ready-to-install archives as
+artifacts. Tagged releases carry all three:
+
+- `LA-VocalChain-linux-x86_64.tar.gz`: VST3, LV2 and Standalone. Copy them into `~/.vst3` and `~/.lv2`.
+- `LA-VocalChain-windows-x64.zip`: VST3. Extract it into `C:\Program Files\Common Files\VST3`.
+- `LA-VocalChain-macos-universal.zip`: VST3 and AU. Copy them into `~/Library/Audio/Plug-Ins/VST3` and
+  `~/Library/Audio/Plug-Ins/Components`. The plugins are not notarized, so after downloading, clear the
+  quarantine flag once before starting your DAW:
+  `xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/LA-VocalChain.vst3 ~/Library/Audio/Plug-Ins/Components/LA-VocalChain.component`
 
 ### Using MIDI
 

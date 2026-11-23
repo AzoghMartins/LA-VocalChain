@@ -13,8 +13,6 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -43,13 +41,84 @@ jobs:
           name: LA-VocalChain-linux-x86_64
           path: LA-VocalChain-linux-x86_64.tar.gz
 
-      # Runs for a pushed v* tag, or for a manual run with a release tag (which creates the tag on this commit)
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v') || inputs.release != ''
-        uses: softprops/action-gh-release@v2
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path build/LAVocalChain_artefacts/Release/VST3/LA-VocalChain.vst3 -DestinationPath LA-VocalChain-windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LA-VocalChain-windows-x64
+          path: LA-VocalChain-windows-x64.zip
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel 4
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Sign (ad hoc)
+        run: |
+          cd build/LAVocalChain_artefacts/Release
+          codesign --force --deep --sign - VST3/LA-VocalChain.vst3 AU/LA-VocalChain.component
+
+      - name: Validate the Audio Unit
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/LAVocalChain_artefacts/Release/AU/LA-VocalChain.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumf LaVc LaAu
+
+      - name: Package
+        run: |
+          cd build/LAVocalChain_artefacts/Release
+          zip -r -y ../../../LA-VocalChain-macos-universal.zip VST3/LA-VocalChain.vst3 AU/LA-VocalChain.component
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LA-VocalChain-macos-universal
+          path: LA-VocalChain-macos-universal.zip
+
+  # Runs for a pushed v* tag, or for a manual run with a release tag (which creates the tag on this commit)
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release != ''
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release || github.ref_name }}
           target_commitish: ${{ github.sha }}
           name: LA-VocalChain ${{ inputs.release || github.ref_name }}
-          files: LA-VocalChain-linux-x86_64.tar.gz
+          files: |
+            LA-VocalChain-linux-x86_64.tar.gz
+            LA-VocalChain-windows-x64.zip
+            LA-VocalChain-macos-universal.zip
           generate_release_notes: true
