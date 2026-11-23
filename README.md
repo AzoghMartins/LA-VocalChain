@@ -1,8 +1,16 @@
 # LA-VocalChain
 
-A complete vocal chain in one plugin for Linux, Windows and macOS (VST3, plus LV2 / Standalone on Linux and AU on macOS): pitch correction,
+A complete vocal chain in one plugin for Linux, Windows and macOS: pitch correction,
 harmonies, gate and breath control, auto level, de-esser, adaptive tone shaping, EQ, compression,
 saturation, doubler, modulation, delay, reverb and a limiter. It uses the same look as LA-Trigger.
+
+| Platform | Formats |
+|---|---|
+| Windows 10/11 (x64) | VST3 |
+| macOS 10.13+ (Apple silicon and Intel) | VST3, AU |
+| Linux (x86_64) | VST3, LV2, Standalone |
+
+Ready-to-install builds for all three are on the [Releases](https://github.com/AzoghMartins/LA-VocalChain/releases) page.
 
 ![LA-VocalChain](docs/screenshot.png)
 
