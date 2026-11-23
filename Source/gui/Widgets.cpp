@@ -39,9 +39,17 @@ void Knob::resized()
 void Knob::paint (juce::Graphics& g)
 {
     auto r = getLocalBounds();
-    g.setColour (Colours::textDim);
-    g.setFont (uiFont (11.0f, true));
-    g.drawFittedText (name.toUpperCase(), r.removeFromTop (14), juce::Justification::centred, 1);
+    g.setColour (Colours::signature.withAlpha (isEnabled() ? 0.9f : 0.45f));
+    {
+        // Shrink long legends to fit the column rather than clipping them
+        const auto caption = name.toUpperCase();
+        const auto area = r.removeFromTop (14);
+        auto font = legendFont (10.5f, 0.02f);
+        for (float size = 10.5f; size > 8.5f && juce::GlyphArrangement::getStringWidth (font, caption) > (float) area.getWidth(); size -= 0.5f)
+            font = legendFont (size - 0.5f, 0.0f);
+        g.setFont (font);
+        g.drawFittedText (caption, area, juce::Justification::centred, 1, 0.7f);
+    }
 
     g.setColour (isEnabled() ? Colours::text : Colours::textDim);
     g.setFont (uiFont (12.0f));
@@ -74,31 +82,36 @@ void Choice::paint (juce::Graphics& g)
 {
     if (caption.isEmpty())
         return;
-    g.setColour (Colours::textDim);
-    g.setFont (uiFont (11.0f, true));
-    g.drawFittedText (caption.toUpperCase(), getLocalBounds().removeFromTop (14), juce::Justification::centred, 1);
+    g.setColour (Colours::signature.withAlpha (0.9f));
+    g.setFont (legendFont (10.5f, 0.02f));
+    g.drawFittedText (caption.toUpperCase(), getLocalBounds().removeFromTop (14), juce::Justification::centred, 1, 0.6f);
 }
 
 //==============================================================================
-void PowerButton::paintButton (juce::Graphics& g, bool over, bool)
+void PowerButton::paintButton (juce::Graphics& g, bool over, bool down)
 {
+    // A round push switch in a metal bezel, with a lit lens when on
     const auto r = getLocalBounds().toFloat().reduced (1.0f);
     const float size = juce::jmin (r.getWidth(), r.getHeight());
     const auto c = r.withSizeKeepingCentre (size, size);
     const bool on = getToggleState();
 
-    g.setColour (on ? colour.withAlpha (0.18f) : Colours::graphBg);
+    g.setColour (juce::Colours::black.withAlpha (0.7f));
+    g.fillEllipse (c.expanded (1.0f));
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff6a6d72), c.getX(), c.getY(), juce::Colour (0xff1c1d1f),
+                                             c.getRight(), c.getBottom(), false));
     g.fillEllipse (c);
-    g.setColour (on ? colour : (over ? Colours::text : Colours::textDim));
-    g.drawEllipse (c, 1.0f);
+    const auto lens = c.reduced (size * 0.16f).translated (0.0f, down ? 0.5f : 0.0f);
+    Hardware::drawLed (g, lens, colour, on);
 
-    const auto centre = c.getCentre();
-    const float rad = size * 0.26f;
+    const auto centre = lens.getCentre();
+    const float rad = lens.getWidth() * 0.27f;
     juce::Path icon;
     icon.addCentredArc (centre.x, centre.y, rad, rad, 0.0f, 0.75f, juce::MathConstants<float>::twoPi - 0.75f, true);
-    icon.startNewSubPath (centre.x, centre.y - rad - 1.5f);
+    icon.startNewSubPath (centre.x, centre.y - rad - 1.0f);
     icon.lineTo (centre.x, centre.y - 0.5f);
-    g.strokePath (icon, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour (on ? juce::Colours::black.withAlpha (0.55f) : (over ? Colours::text : Colours::textDim).withAlpha (0.8f));
+    g.strokePath (icon, juce::PathStrokeType (1.3f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 
 //==============================================================================
@@ -135,20 +148,29 @@ void Section::resized()
 
 void Section::paint (juce::Graphics& g)
 {
-    const auto r = getLocalBounds().toFloat().reduced (0.5f);
-    g.setColour (Colours::panel);
-    g.fillRoundedRectangle (r, 6.0f);
-    g.setColour (Colours::edge.interpolatedWith (colour, highlight));
-    g.drawRoundedRectangle (r, 6.0f, 1.0f + highlight);
+    const auto r = getLocalBounds().toFloat().reduced (1.0f);
+    Hardware::drawPlate (g, r, 5.0f, false);
+    if (highlight > 0.0f)
+    {
+        g.setColour (colour.withAlpha (0.8f * highlight));
+        g.drawRoundedRectangle (r.reduced (0.5f), 5.0f, 1.0f + highlight);
+    }
 
-    g.setColour (isActive() ? colour : Colours::textDim);
-    g.fillRoundedRectangle (juce::Rectangle<float> (10.0f, 11.0f, 3.0f, 10.0f), 1.5f);
-    g.setColour (isActive() ? Colours::text : Colours::textDim);
-    g.setFont (uiFont (12.5f, true));
-    g.drawText (title.toUpperCase(), 18, 6, getWidth() - 50, 20, juce::Justification::centredLeft);
+    // Small screws in the bottom corners, when the panel is tall enough
+    if (getHeight() > 150)
+        for (float x : { r.getX() + 7.0f, r.getRight() - 7.0f })
+            Hardware::drawScrew (g, { x, r.getBottom() - 7.0f }, 2.6f);
 
-    g.setColour (Colours::edge.withAlpha (0.6f));
+    Hardware::drawLed (g, { 9.0f, 12.0f, 7.0f, 7.0f }, colour, isActive());
+    g.setColour (Colours::signature.withAlpha (isActive() ? 1.0f : 0.5f));
+    g.setFont (legendFont (12.5f));
+    g.drawText (title.toUpperCase(), 21, 6, getWidth() - 52, 20, juce::Justification::centredLeft);
+
+    // Engraved rule under the title
+    g.setColour (juce::Colours::black.withAlpha (0.7f));
     g.drawHorizontalLine (28, 8.0f, (float) getWidth() - 8.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.07f));
+    g.drawHorizontalLine (29, 8.0f, (float) getWidth() - 8.0f);
 }
 
 //==============================================================================
@@ -173,36 +195,47 @@ void LevelMeters::paint (juce::Graphics& g)
     const int labelH = 14;
     const int w = (r.getWidth() - 4) / 3;
 
+    // LED ladder: lit segments up to the level, the rest dark but visible behind the lens
     auto drawBar = [&] (juce::Rectangle<int> area, float db, float hold, const juce::String& label, bool reduction)
     {
-        g.setColour (Colours::textDim);
-        g.setFont (uiFont (9.0f, true));
+        g.setColour (Colours::signature.withAlpha (0.85f));
+        g.setFont (legendFont (9.0f));
         g.drawText (label, area.removeFromBottom (labelH).expanded (4, 0), juce::Justification::centred, false);
-        const auto bar = area.toFloat();
-        g.setColour (Colours::graphBg);
-        g.fillRoundedRectangle (bar, 2.0f);
+        const auto slot = area.toFloat();
+        Hardware::drawRecess (g, slot, 2.0f);
 
-        if (reduction)
+        const auto inner = slot.reduced (2.0f, 2.0f);
+        const float seg = 3.0f, gap = 1.0f;
+        const int n = juce::jmax (1, (int) ((inner.getHeight() + gap) / (seg + gap)));
+        const float level = reduction ? juce::jlimit (0.0f, 1.0f, db / 24.0f) : juce::jlimit (0.0f, 1.0f, (db + 60.0f) / 60.0f);
+        const float holdFrac = reduction ? 0.0f : juce::jlimit (0.0f, 1.0f, (hold + 60.0f) / 60.0f);
+        const int holdSeg = holdFrac > 0.0f ? juce::jlimit (0, n - 1, (int) (holdFrac * (float) n)) : -1;
+
+        for (int i = 0; i < n; ++i)
         {
-            const float frac = juce::jlimit (0.0f, 1.0f, db / 24.0f);
-            g.setColour (Colours::danger);
-            g.fillRoundedRectangle (bar.withHeight (bar.getHeight() * frac), 2.0f);
-            return;
-        }
-
-        const float frac = juce::jlimit (0.0f, 1.0f, (db + 60.0f) / 60.0f);
-        const auto fill = bar.withTrimmedTop (bar.getHeight() * (1.0f - frac));
-        juce::ColourGradient grad (Colours::danger, bar.getX(), bar.getY(), Colours::accent, bar.getX(), bar.getBottom(), false);
-        grad.addColour (0.12, Colours::threshold);
-        grad.addColour (0.3, Colours::accent);
-        g.setGradientFill (grad);
-        g.fillRoundedRectangle (fill, 2.0f);
-
-        const float holdFrac = juce::jlimit (0.0f, 1.0f, (hold + 60.0f) / 60.0f);
-        if (holdFrac > 0.0f)
-        {
-            g.setColour (Colours::text);
-            g.fillRect (bar.getX(), bar.getBottom() - bar.getHeight() * holdFrac, bar.getWidth(), 1.5f);
+            const float frac = ((float) i + 0.5f) / (float) n; // 0 = bottom
+            juce::Rectangle<float> s;
+            juce::Colour c;
+            bool lit;
+            if (reduction)
+            {
+                s = { inner.getX(), inner.getY() + (float) i * (seg + gap), inner.getWidth(), seg };
+                c = Colours::danger;
+                lit = frac <= level;
+            }
+            else
+            {
+                s = { inner.getX(), inner.getBottom() - (float) (i + 1) * (seg + gap) + gap, inner.getWidth(), seg };
+                c = frac > 0.9f ? Colours::danger : (frac > 0.75f ? Colours::threshold : Colours::accent);
+                lit = frac <= level || i == holdSeg;
+            }
+            g.setColour (lit ? c : c.withAlpha (0.1f));
+            g.fillRect (s);
+            if (lit)
+            {
+                g.setColour (c.withAlpha (0.25f));
+                g.fillRect (s.expanded (1.0f, 0.5f));
+            }
         }
     };
 

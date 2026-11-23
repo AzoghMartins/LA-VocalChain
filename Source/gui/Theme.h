@@ -6,14 +6,19 @@ namespace lavc
 {
 namespace Colours
 {
-    inline const juce::Colour background  { 0xff0e1116 };
-    inline const juce::Colour panel       { 0xff161a21 };
-    inline const juce::Colour panelLight  { 0xff1d222b };
-    inline const juce::Colour edge        { 0xff2a313c };
-    inline const juce::Colour graphBg     { 0xff0a0c10 };
-    inline const juce::Colour grid        { 0xff1f252e };
-    inline const juce::Colour text        { 0xffdfe5ee };
-    inline const juce::Colour textDim     { 0xff7c8796 };
+    // ---- Hardware: black brushed-metal chassis, silk-screened legends, glass screens ----------------
+    inline const juce::Colour background  { 0xff0b0b0c };   // chassis
+    inline const juce::Colour panel       { 0xff1b1c1e };   // brushed plate
+    inline const juce::Colour panelLight  { 0xff27292c };   // raised caps, tiles
+    inline const juce::Colour edge        { 0xff3a3d41 };
+    inline const juce::Colour graphBg     { 0xff07090a };   // screen glass
+    inline const juce::Colour grid        { 0xff18201f };
+    inline const juce::Colour text        { 0xffece6d8 };   // silk-screen off-white
+    inline const juce::Colour textDim     { 0xff8b8882 };
+
+    /** The family colour of this unit: legends, knob scales, logo, screen tint and trim. */
+    inline const juce::Colour signature   { 0xffc8a8ff };   // VocalChain: lavender
+
     inline const juce::Colour accent      { 0xff2fe0cf };   // teal: triggers, output
     inline const juce::Colour accentDim   { 0xff1a7d74 };
     inline const juce::Colour threshold   { 0xffffa53d };   // orange: thresholds
@@ -44,6 +49,35 @@ inline juce::Font uiFont (float size, bool bold = false)
     return juce::Font (juce::FontOptions (size, bold ? juce::Font::bold : juce::Font::plain));
 }
 
+/** Silk-screened legend lettering: bold, slightly spaced. */
+inline juce::Font legendFont (float size, float spacing = 0.06f)
+{
+    return juce::Font (juce::FontOptions (size, juce::Font::bold).withKerningFactor (spacing));
+}
+
+/** Drawing for the physical look shared by the LA family: brushed metal, screws, glass screens, LEDs. */
+namespace Hardware
+{
+    /** Tileable grain used for the brushed metal. */
+    const juce::Image& brushedTexture();
+    /** Brushed black metal with a soft sheen. */
+    void drawBrushedMetal (juce::Graphics&, juce::Rectangle<float> area, juce::Colour base, float corner = 0.0f);
+    /** A raised, bevelled metal plate (module panel). Screws go in the corners when there is room. */
+    void drawPlate (juce::Graphics&, juce::Rectangle<float> area, float corner = 5.0f, bool screws = true);
+    /** A countersunk slotted screw. */
+    void drawScrew (juce::Graphics&, juce::Point<float> centre, float radius);
+    /** The whole front panel: chassis, the header plate (height `headerHeight`) and its screws. */
+    void drawChassis (juce::Graphics&, juce::Rectangle<int> area, int headerHeight);
+    /** A recessed screen: bezel and dark glass. Draw the content afterwards, then drawGlass(). */
+    void drawScreen (juce::Graphics&, juce::Rectangle<float> area, float corner = 6.0f);
+    /** Reflection and inner shadow over a screen's content. */
+    void drawGlass (juce::Graphics&, juce::Rectangle<float> area, float corner = 6.0f);
+    /** A round indicator LED. */
+    void drawLed (juce::Graphics&, juce::Rectangle<float> area, juce::Colour colour, bool lit);
+    /** A recessed slot (meter windows, faders). */
+    void drawRecess (juce::Graphics&, juce::Rectangle<float> area, float corner = 3.0f);
+} // namespace Hardware
+
 class VocalChainLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -60,7 +94,9 @@ public:
                        int buttonW, int buttonH, juce::ComboBox&) override;
     juce::Font getComboBoxFont (juce::ComboBox&) override { return uiFont (13.0f); }
     juce::Font getPopupMenuFont() override { return uiFont (14.0f); }
+    void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
     void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
     juce::Font getTextButtonFont (juce::TextButton&, int buttonHeight) override;
+    void drawTooltip (juce::Graphics&, const juce::String& text, int width, int height) override;
 };
 } // namespace lavc

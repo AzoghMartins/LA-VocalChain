@@ -52,8 +52,12 @@ VoiceStrip::VoiceStrip (juce::AudioProcessorValueTreeState& s, int v)
 void VoiceStrip::paint (juce::Graphics& g)
 {
     auto r = getLocalBounds().toFloat().reduced (2.0f, 0.0f);
-    g.setColour (Colours::panelLight.withAlpha (0.5f));
+    g.setColour (juce::Colours::black.withAlpha (0.28f));
     g.fillRoundedRectangle (r, 5.0f);
+    g.setColour (juce::Colours::black.withAlpha (0.5f));
+    g.drawRoundedRectangle (r.reduced (0.5f), 5.0f, 1.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.05f));
+    g.drawLine (r.getX() + 5.0f, r.getBottom() - 0.5f, r.getRight() - 5.0f, r.getBottom() - 0.5f, 1.0f);
     g.setColour (power.getToggleState() ? Colours::forVoice (index) : Colours::textDim);
     g.setFont (uiFont (11.0f, true));
     g.drawText ("VOICE " + juce::String (index + 1), 30, 4, getWidth() - 34, 18, juce::Justification::centredLeft);
@@ -639,13 +643,7 @@ void MainPanel::layoutPages()
 
 void MainPanel::paint (juce::Graphics& g)
 {
-    g.fillAll (Colours::background);
-
-    auto header = juce::Rectangle<int> (0, 0, baseWidth, 46);
-    g.setGradientFill (juce::ColourGradient (Colours::panelLight, 0.0f, 0.0f, Colours::panel, 0.0f, 46.0f, false));
-    g.fillRect (header);
-    g.setColour (Colours::edge);
-    g.drawHorizontalLine (46, 0.0f, (float) baseWidth);
+    Hardware::drawChassis (g, { 0, 0, baseWidth, baseHeight }, 46);
 
     // Logo: a pitch line snapping onto note steps
     {
@@ -656,7 +654,7 @@ void MainPanel::paint (juce::Graphics& g)
         mark.lineTo (x0 + 13.0f, y0 + 1.0f);
         mark.quadraticTo (x0 + 15.0f, y0 - 7.0f, x0 + 19.0f, y0 - 7.0f);
         mark.lineTo (x0 + 26.0f, y0 - 7.0f);
-        g.setColour (Colours::accent);
+        g.setColour (Colours::signature);
         g.strokePath (mark, juce::PathStrokeType (2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         g.setColour (Colours::learn);
         g.fillEllipse (x0 + 23.0f, y0 - 10.0f, 6.0f, 6.0f);
@@ -664,7 +662,7 @@ void MainPanel::paint (juce::Graphics& g)
         g.setFont (uiFont (21.0f, true));
         g.setColour (Colours::text);
         g.drawText ("LA", 48, 8, 30, 30, juce::Justification::centredLeft);
-        g.setColour (Colours::accent);
+        g.setColour (Colours::signature);
         g.drawText ("VOCALCHAIN", 76, 8, 140, 30, juce::Justification::centredLeft);
         g.setColour (Colours::textDim);
         g.setFont (uiFont (10.5f));
