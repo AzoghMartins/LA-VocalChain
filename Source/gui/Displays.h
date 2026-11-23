@@ -14,6 +14,7 @@ class VocalChainProcessor;
 class PitchDisplay : public juce::Component, public juce::SettableTooltipClient
 {
 public:
+    void paintOverChildren (juce::Graphics& g) override { Hardware::drawGlass (g, getLocalBounds().toFloat()); }
     explicit PitchDisplay (VocalChainProcessor&);
 
     void addFrame (const PitchFrame& f);
@@ -46,6 +47,7 @@ private:
 class EqDisplay : public juce::Component, public juce::SettableTooltipClient
 {
 public:
+    void paintOverChildren (juce::Graphics& g) override { Hardware::drawGlass (g, getLocalBounds().toFloat()); }
     explicit EqDisplay (VocalChainProcessor&);
 
     void pullSpectrum();
@@ -87,6 +89,7 @@ private:
 class NotePanel : public juce::Component
 {
 public:
+    void paintOverChildren (juce::Graphics& g) override { Hardware::drawGlass (g, getLocalBounds().toFloat().reduced (6.0f, 2.0f), 5.0f); }
     explicit NotePanel (VocalChainProcessor& p);
     void tick();
     void paint (juce::Graphics&) override;
