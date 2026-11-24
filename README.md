@@ -169,8 +169,12 @@ tests/EngineTests.cpp      29 DSP tests on synthetic voices (pitch accuracy, tun
 tests/PluginIntegrationTest  drives processor + editor like a host; can render a screenshot
 ```
 
-## License note
+## License
 
-LA-VocalChain is built on [JUCE 8](https://juce.com), which is dual-licensed under AGPLv3 or a
-commercial license. Distributing builds requires either releasing this code under AGPLv3 or
-holding a JUCE commercial license.
+LA-VocalChain is free software: you can redistribute it and/or modify it under the terms of the
+[GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0). It comes with absolutely no warranty.
+This applies to every release, including v0.1 and v0.2, which were published before the LICENSE file was added.
+
+Copyright (C) 2026 AzoghMartins (Lantern Assembly).
+
+LA-VocalChain is built on [JUCE 8](https://juce.com), used here under the AGPLv3.
