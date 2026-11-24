@@ -34,7 +34,8 @@ jobs:
       - name: Package
         run: |
           cd build/LAVocalChain_artefacts/Release
-          tar czf ../../../LA-VocalChain-linux-x86_64.tar.gz VST3/LA-VocalChain.vst3 LV2/LA-VocalChain.lv2 Standalone/LA-VocalChain
+          cp ../../../LICENSE LICENSE-LA-VocalChain.txt
+          tar czf ../../../LA-VocalChain-linux-x86_64.tar.gz VST3/LA-VocalChain.vst3 LV2/LA-VocalChain.lv2 Standalone/LA-VocalChain LICENSE-LA-VocalChain.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -57,7 +58,9 @@ jobs:
 
       - name: Package
         shell: pwsh
-        run: Compress-Archive -Path build/LAVocalChain_artefacts/Release/VST3/LA-VocalChain.vst3 -DestinationPath LA-VocalChain-windows-x64.zip
+        run: |
+          Copy-Item LICENSE LICENSE-LA-VocalChain.txt
+          Compress-Archive -Path build/LAVocalChain_artefacts/Release/VST3/LA-VocalChain.vst3, LICENSE-LA-VocalChain.txt -DestinationPath LA-VocalChain-windows-x64.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -93,7 +96,8 @@ jobs:
       - name: Package
         run: |
           cd build/LAVocalChain_artefacts/Release
-          zip -r -y ../../../LA-VocalChain-macos-universal.zip VST3/LA-VocalChain.vst3 AU/LA-VocalChain.component
+          cp ../../../LICENSE LICENSE-LA-VocalChain.txt
+          zip -r -y ../../../LA-VocalChain-macos-universal.zip VST3/LA-VocalChain.vst3 AU/LA-VocalChain.component LICENSE-LA-VocalChain.txt
 
       - uses: actions/upload-artifact@v4
         with:
