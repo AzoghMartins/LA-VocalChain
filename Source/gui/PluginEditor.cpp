@@ -98,9 +98,8 @@ MainPanel::MainPanel (VocalChainProcessor& p)
     // ---- Header ----------------------------------------------------------------------------
     refreshPresetList();
     presetBox.setTooltip ("Factory and user presets");
-    presetBox.onChange = [this]
+    presetBox.onItemChosen = [this] (int id)
     {
-        const int id = presetBox.getSelectedId();
         if (id > 0 && id < 1000)
             processor.setCurrentProgram (id - 1);
         else if (id >= 1000 && id - 1000 < numUserPresets)
