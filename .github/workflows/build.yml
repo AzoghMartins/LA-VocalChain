@@ -1,8 +1,8 @@
 name: Build
 
+# Manual only (Actions -> Build -> Run workflow): releases are built locally, so pushes and pull
+# requests no longer start a build and use up Actions minutes.
 on:
-  push:
-  pull_request:
   workflow_dispatch:
     inputs:
       release:
