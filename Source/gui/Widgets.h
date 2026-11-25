@@ -120,4 +120,49 @@ public:
 private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment;
 };
+
+/** A ComboBox whose menu reports the chosen item straight to onItemChosen, synchronously.
+
+    A plain ComboBox stores the chosen id and fires onChange asynchronously; the editor timer that
+    keeps the box text in sync with the processor could run in between and put the old selection
+    back, so the click loaded the old preset again (or nothing). Here the choice is delivered
+    directly, and choosing the item that is already shown runs it again (e.g. to reload a preset
+    after tweaking it). The displayed text is owned by whoever calls setText. */
+class MenuBox : public juce::ComboBox
+{
+public:
+    std::function<void (int itemId)> onItemChosen;
+
+    void showPopup() override
+    {
+        auto menu = *getRootMenu();
+        const auto shown = getText();
+        bool ticked = false;
+        for (juce::PopupMenu::MenuItemIterator it (menu, true); it.next();)
+        {
+            auto& item = it.getItem();
+            if (item.itemID != 0)
+            {
+                item.isTicked = ! ticked && item.text == shown;
+                ticked = ticked || item.isTicked;
+            }
+        }
+
+        menu.setLookAndFeel (&getLookAndFeel());
+        juce::Component::SafePointer<MenuBox> safe (this);
+        menu.showMenuAsync (juce::PopupMenu::Options()
+                                .withTargetComponent (this)
+                                .withMinimumWidth (getWidth())
+                                .withMaximumNumColumns (1)
+                                .withStandardItemHeight (juce::jlimit (12, 24, getHeight())),
+                            [safe] (int result)
+                            {
+                                if (safe == nullptr)
+                                    return;
+                                safe->hidePopup();
+                                if (result != 0 && safe->onItemChosen)
+                                    safe->onItemChosen (result);
+                            });
+    }
+};
 } // namespace lavc

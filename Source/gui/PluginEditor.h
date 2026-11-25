@@ -54,7 +54,7 @@ private:
     std::vector<std::unique_ptr<juce::Component>> owned;
 
     // Header
-    juce::ComboBox presetBox;
+    MenuBox presetBox;
     PillButton saveButton { "SAVE" }, mixButton { "MIXING" }, trackButton { "TRACKING", Colours::threshold };
     PillButton assistButton { "ASSIST", Colours::learn }, freezeButton { "FREEZE", Colours::learn };
     juce::File userPresetFiles[256];

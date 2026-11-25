@@ -160,7 +160,8 @@ private:
     void handleAsyncUpdate() override;
     void rebuildEngine();
     void setParam (const char* id, float value);
-    void resetToDefaults();
+    /** Sets every parameter in one pass: listed ones to their value, the rest to their default. */
+    void applyParameterValues (const std::vector<std::pair<const char*, float>>& values);
     void handleMidi (const juce::MidiBuffer& midi) noexcept;
 
     juce::AudioProcessorValueTreeState apvts;
